@@ -24,6 +24,7 @@ namespace BetterTimeWarp
     }
     //    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
+    [DefaultExecutionOrder(100)]
     public class BetterTimeWarp : MonoBehaviour
     {
         //public static BetterTimeWarp I1nstance;
@@ -829,42 +830,20 @@ namespace BetterTimeWarp
 
         void FixedUpdate()
         {
-            if (TimeWarp.fetch != null &&  TimeWarp.fetch.Mode == TimeWarp.Modes.HIGH && UseLosslessPhysics && Time.timeScale < 100f)
+            if (UseLosslessPhysics && Time.timeScale < 100f)
             {
-                if (Time.timeScale == 1f)
+                float physicsFrequency = 50;
+                
+                if (Time.timeScale > 1f)
                 {
-                    Time.fixedDeltaTime = 0.02f;
-
-                    //ScreenMessages.PostScreenMessage("1 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-                    Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                    Time.maximumDeltaTime = GameSettings.PHYSICS_FRAME_DT_LIMIT;
-
-                }
-                else
-                {
-                    if (Time.timeScale >= LosslessUpperThreshold)
-                    {
-                        Time.fixedDeltaTime = LosslessUpperThreshold * 0.02f;
-                        //ScreenMessages.PostScreenMessage("2 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-                        Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                        Time.maximumDeltaTime = Time.fixedDeltaTime;
-                    }
-                    else
-                    {
-                        Time.fixedDeltaTime = Time.timeScale * 0.02f;
-                        //ScreenMessages.PostScreenMessage("3 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-
-                        Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                        Time.maximumDeltaTime = Time.fixedDeltaTime;
-                    }
+                    physicsFrequency /= Mathf.Min(LosslessUpperThreshold, Time.timeScale);
                 }
 
-                float v = Mathf.Clamp((Mathf.Round(Time.fixedDeltaTime * 100f) / 100f), 0.02f, 0.35f);
-                if (v != GameSettings.PHYSICS_FRAME_DT_LIMIT)
-                {
-                    GameSettings.PHYSICS_FRAME_DT_LIMIT = v;
-                    GameSettings.SaveSettings();
-                }
+                float fixedDeltaTime = 1f / physicsFrequency;
+
+                Time.fixedDeltaTime = fixedDeltaTime;
+                Planetarium.fetch.fixedDeltaTime = fixedDeltaTime;
+                Time.maximumDeltaTime = Time.fixedDeltaTime;
             }
         }
         
